@@ -24,7 +24,6 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link
             href="/"
-            onClick={showComingSoonToast}
             className="flex items-center space-x-2 text-primary hover:text-primary-dark transition-colors"
           >
             <Waves className="w-8 h-8" />
