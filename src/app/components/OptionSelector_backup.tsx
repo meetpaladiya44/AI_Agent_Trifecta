@@ -101,8 +101,8 @@ const OptionsSelector = () => {
 
     const result = await simulateApiCall(
       apiKey,
-      selectedPlatform,
-      setShowTable
+      selectedPlatform
+      // setShowTable
     );
 
     if (result.success && result.data) {

@@ -91,6 +91,12 @@ export const simulateApiCall = async (apiKey: string, platform: string) => {
 
     const processedData = await processResponse.json();
 
+    //   // Generate and download CSV on client-side
+    //   if (processedData && processedData.data && processedData.data.length > 0) {
+    //     const csvContent = generateCSV(processedData.data);
+    //     //   downloadCSV(csvContent, "result.csv");
+    //   }
+
     return {
       success: true,
       data: processedData.data,
@@ -103,85 +109,3 @@ export const simulateApiCall = async (apiKey: string, platform: string) => {
     };
   }
 };
-
-// export const simulateApiCall = async (
-//   apiKey: string,
-//   platform: string
-//   //   setShowTable: (show: boolean) => void
-// ): Promise<SimulationResponse> => {
-//   const controller = new AbortController();
-//   const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-//   try {
-//     console.log("Making API call with:", { apiKey, platform });
-
-//     const response = await fetch("/api/ctxbt-api-call", {
-//       method: "GET",
-//       headers: {
-//         Authorization: `Bearer ${apiKey}`,
-//         "Content-Type": "application/json",
-//       },
-//       signal: controller.signal,
-//     });
-
-//     clearTimeout(timeoutId);
-//     console.log("Response status:", response.status);
-
-//     if (!response.ok) {
-//       const errorText = await response.text();
-//       throw new Error(
-//         `HTTP error! status: ${response.status}, message: ${errorText}`
-//       );
-//     }
-
-//     const data = await response.json();
-//     console.log("Received data:", data);
-
-//     // Generate and download CSV on client-side
-//     if (data.success && data.data && data.data.length > 0) {
-//       const csvContent = generateCSV(data.data);
-//       //   downloadCSV(csvContent, "backtesting.csv");
-//     }
-
-//     // setShowTable(true);
-
-//     return {
-//       success: true,
-//       data: data.data,
-//     };
-//   } catch (error) {
-//     clearTimeout(timeoutId);
-//     console.error("API Simulation Error Details:", {
-//       error,
-//       message: error instanceof Error ? error.message : "Unknown error",
-//       stack: error instanceof Error ? error.stack : undefined,
-//     });
-
-//     let errorMessage = "Failed to fetch simulation data.";
-//     let statusCode: number | undefined;
-
-//     if (error instanceof TypeError) {
-//       errorMessage += " Network error occurred.";
-//     } else if (error instanceof Error) {
-//       errorMessage += ` ${error.message}`;
-//       const statusMatch = error.message.match(/status: (\d+)/);
-//       statusCode = statusMatch ? parseInt(statusMatch[1]) : undefined;
-//     }
-
-//     toast.error(errorMessage, {
-//       position: "top-center",
-//       autoClose: 5000,
-//       hideProgressBar: false,
-//       closeOnClick: true,
-//       pauseOnHover: true,
-//       draggable: true,
-//       theme: "light",
-//     });
-
-//     return {
-//       success: false,
-//       error: errorMessage,
-//       status: statusCode,
-//     };
-//   }
-// };
