@@ -8,14 +8,10 @@ import PlatformResultsTable from "./PlatformResultsTable";
 
 const generateCSV = (data: any[]): any => {
   const headers = [
-    "Twitter Account",
-    "Tweet",
-    "Tweet Date",
     "Signal Generation Date",
     "Signal Message",
     "Token Mentioned",
     "Token ID",
-    "Price at Tweet",
     "Current Price",
     "TP1",
     "TP2",
@@ -27,14 +23,10 @@ const generateCSV = (data: any[]): any => {
   const rows = data.map((item) => {
     const signalData = item.signal_data;
     return [
-      signalData.twitterHandle,
-      signalData.tweet_link,
-      signalData.tweet_timestamp,
       signalData.tweet_timestamp,
       signalData.signal,
       signalData.tokenMentioned,
       signalData.tokenId,
-      signalData.priceAtTweet,
       signalData.currentPrice,
       signalData.targets[0],
       signalData.targets[1],
@@ -83,22 +75,6 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
   const [showResults, setShowResults] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const triggerRef = useRef(null);
-
-  const handlePlatformChange = (platformName: string) => {
-    if (platformName === "CTxbt") {
-      setSelectedPlatform(platformName);
-    } else {
-      toast.info(`${platformName} - Coming Soon!`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
-    }
-  };
 
   const handleApiSimulate = async () => {
     if (!apiKey || !selectedPlatform) return;

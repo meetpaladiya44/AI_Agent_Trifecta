@@ -76,12 +76,8 @@ const PlatformResultsTable = ({ data }: PlatformResultsTableProps) => {
               <td className="py-3 px-4 text-gray-300">
                 {row.signal_data.stopLoss}
               </td>
-              <td className="py-3 px-4 text-gray-300">
-                {row.exit_price || "N/A"}
-              </td>
-              <td className="py-3 px-4 text-gray-300">
-                {row.p_and_l || "N/A"}
-              </td>
+              <td className="py-3 px-4 text-gray-300">{row.exit_price}</td>
+              <td className="py-3 px-4 text-gray-300">{row.p_and_l}</td>
             </tr>
           ))}
         </tbody>
