@@ -6,6 +6,61 @@ import { simulateApiCall } from "../utils/apiSimulator";
 import { Eye, EyeOff, Play } from "lucide-react";
 import PlatformResultsTable from "./PlatformResultsTable";
 
+const generateCSV = (data: any[]): any => {
+  const headers = [
+    "Twitter Account",
+    "Tweet",
+    "Tweet Date",
+    "Signal Generation Date",
+    "Signal Message",
+    "Token Mentioned",
+    "Token ID",
+    "Price at Tweet",
+    "Current Price",
+    "TP1",
+    "TP2",
+    "SL",
+    "Exit Price",
+    "P&L",
+  ];
+
+  const rows = data.map((item) => {
+    const signalData = item.signal_data;
+    return [
+      signalData.twitterHandle,
+      signalData.tweet_link,
+      signalData.tweet_timestamp,
+      signalData.tweet_timestamp,
+      signalData.signal,
+      signalData.tokenMentioned,
+      signalData.tokenId,
+      signalData.priceAtTweet,
+      signalData.currentPrice,
+      signalData.targets[0],
+      signalData.targets[1],
+      signalData.stopLoss,
+      item.exit_price || "",
+      item.p_and_l || "",
+    ]
+      .map((field) => `"${field || ""}"`)
+      .join(",");
+  });
+
+  return [headers.join(","), ...rows].join("\n");
+};
+
+const downloadCSV = (csvContent: string, fileName: string) => {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 const platforms = [
   { name: "CTxbt", image: "/assets/ctxbt.svg" },
   { name: "Kaito", image: "/assets/kaito.svg" },
@@ -171,7 +226,20 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
         <span>Simulate</span>
       </button>
 
-      {showResults && <PlatformResultsTable data={results} />}
+      {showResults && (
+        <div>
+          <PlatformResultsTable data={results} />{" "}
+          <button
+            onClick={() => {
+              const csvContent = generateCSV(results);
+              downloadCSV(csvContent, "backtesting.csv");
+            }}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          >
+            Download CSV
+          </button>
+        </div>
+      )}
     </div>
   );
 };

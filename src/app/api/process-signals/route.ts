@@ -36,6 +36,7 @@ async function processSignals(data: any[]) {
     const signal = item.signal_data;
     try {
       const prices = priceCache.get(signal.tokenId) || [];
+      console.log(`Tweet timestamp: ${signal.tweet_timestamp}`);
       const tweetTimestamp = parseTweetDate(signal.tweet_timestamp);
       const relevantPrices = prices.filter(([ts]) => ts >= tweetTimestamp);
 
