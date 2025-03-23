@@ -10,14 +10,10 @@ interface SimulationResponse {
 
 function generateCSV(data: any[]): string {
   const headers = [
-    "Twitter Account",
-    "Tweet",
-    "Tweet Date",
     "Signal Generation Date",
     "Signal Message",
     "Token Mentioned",
     "Token ID",
-    "Price at Tweet",
     "Current Price",
     "TP1",
     "TP2",
@@ -29,14 +25,10 @@ function generateCSV(data: any[]): string {
   const rows = data.map((item) => {
     const signalData = item.signal_data;
     return [
-      signalData.twitterHandle,
-      signalData.tweet_link,
-      signalData.tweet_timestamp,
       signalData.tweet_timestamp,
       signalData.signal,
       signalData.tokenMentioned,
       signalData.tokenId,
-      signalData.priceAtTweet,
       signalData.currentPrice,
       signalData.targets[0],
       signalData.targets[1],
