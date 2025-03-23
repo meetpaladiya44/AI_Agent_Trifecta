@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
@@ -125,16 +125,19 @@ const OptionsSelector = () => {
       ),
     },
     option2: {
-      title: "Copy from Platforms",
-      description: "Connect to Web3 platforms using an API key to fetch real-time blockchain data. Select a platform (e.g., CTxbt) to retrieve crypto signals, token prices, and market insights for simulation.",
+      title: "Connect to platform API",
+      description:
+        "Connect to Web3 platforms using an API key to fetch real-time blockchain data. Select a platform (e.g., CTxbt) to retrieve crypto signals, token prices, and market insights for simulation.",
       icon: <Globe className="w-5 h-5" />,
-      content: <PlatformSelector onSimulateSuccess={handlePlatformSimulateSuccess} />
+      content: (
+        <PlatformSelector onSimulateSuccess={handlePlatformSimulateSuccess} />
+      ),
     },
   };
 
   return (
     <div className="w-[70vw] mx-auto p-6 hidden lg:block">
-      <div className="bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-gray-900 rounded-2xl shadow-xl overflow-visible">
         {/* Options Header */}
         <div className="flex border-b border-gray-800">
           {(["option1", "option2"] as const).map((option) => (
