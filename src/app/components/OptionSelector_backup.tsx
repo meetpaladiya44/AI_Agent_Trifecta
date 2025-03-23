@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
@@ -13,20 +13,6 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { simulateApiCall } from "../utils/apiSimulator";
-import "react-toastify/dist/ReactToastify.css";
-import PlatformSelector from "./PlatformSelector";
-import coins from '../../../coins.json';
-
-function getCoinIdFromJson(tokenSymbol: string): string | null {
-  // Convert the token symbol to lowercase
-  const tokenSymbolLower = tokenSymbol.toLowerCase();
-
-  // Search for the token symbol in the coins.json data
-  const coin = coins.find((coin) => coin.symbol.toLowerCase() === tokenSymbolLower);
-
-  // Return the coin ID if found, otherwise return null
-  return coin ? coin.id : null;
-}
 
 const dummyTableData = [
   {
@@ -96,90 +82,47 @@ const OptionsSelector = () => {
   const [showApiKey, setShowApiKey] = useState(false); // State for toggling API key visibility
   const [tableData, setTableData] = useState<any[]>([]);
 
-  const handleTelegramSimulate = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/infer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: telegramMessage }),
-      });
+  const platforms = [
+    { name: "CTxbt", image: "/assets/ctxbt.svg" },
+    { name: "Kaito", image: "/assets/kaito.svg" },
+    { name: "Dune", image: "/assets/dune.svg" },
+    { name: "Chainlink", image: "/assets/chainlink.svg" },
+    { name: "1Inch", image: "/assets/1inch.svg" },
+    { name: "dYdX", image: "/assets/dydx.svg" },
+    { name: "Moralis", image: "/assets/moralis.svg" },
+  ];
 
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
+  const handleSimulate = () => {
+    setShowTable(true);
+  };
 
-      const responseText = await response.text();
-      console.log('Raw inference response:', responseText);
+  const handleApiSimulate = async () => {
+    if (!apiKey || !selectedPlatform) return;
 
-      let data: { result: string; };
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        throw new Error('Failed to parse response as JSON');
-      }
+    const result = await simulateApiCall(
+      apiKey,
+      selectedPlatform
+      // setShowTable
+    );
 
-      console.log('Inference result:', data.result);
-
-      let parsedResult: { tokenSymbol: any; signal: any; tp1: any; tp2: any; sl: any; };
-      try {
-        parsedResult = JSON.parse(data.result);
-      } catch (parseError) {
-        throw new Error('Failed to parse result as JSON');
-      }
-
-      if (parsedResult && parsedResult.tokenSymbol && parsedResult.signal && parsedResult.tp1 && parsedResult.tp2 && parsedResult.sl) {
-        // Convert tokenSymbol to lowercase and fetch coin ID from coins.json
-        const tokenSymbolLower = parsedResult.tokenSymbol.toLowerCase();
-        const coinId = getCoinIdFromJson(tokenSymbolLower);
-        console.log("Coin ID: ", coinId);
-
-        // Prepare data for process-signal API
-        const processData = {
-          signal_data: {
-            tokenSymbol: parsedResult.tokenSymbol,
-            signal: parsedResult.signal,
-            tp1: parsedResult.tp1,
-            tp2: parsedResult.tp2,
-            sl: parsedResult.sl,
-            tokenId: coinId,
-          }
-        };
-
-        console.log("Processed data", processData);
-
-        // Send data to process-signal API
-        const processResponse = await fetch('/api/process-telegram-signals', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(processData),
-        });
-
-        if (!processResponse.ok) {
-          throw new Error('Failed to process signals');
-        }
-
-        const processedData = await processResponse.json();
-        console.log(processedData.data);
-        setTableData([processedData.data]);
-        setShowTable(true);
-      } else {
-        toast.error('Invalid response format. Please try again.', {
+    if (result.success && result.data) {
+      setTableData(result.data); // Update table data with API response
+      toast.success(
+        "Simulation data fetched and CSV downloaded successfully!",
+        {
           position: "top-center",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "light",
-        });
-      }
-    } catch (error) {
-      console.error('Error during inference:', error);
-      toast.error('Failed to perform inference. Please try again.', {
+        }
+      );
+    }
+  };
+
+  // Handle platform selection with toaster for non-CTxbt platforms
+  const handlePlatformChange = (platformName: string) => {
+    if (platformName === "CTxbt") {
+      setSelectedPlatform(platformName);
+    } else {
+      toast.info(`${platformName} - Coming Soon!`, {
         position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -189,11 +132,6 @@ const OptionsSelector = () => {
         theme: "light",
       });
     }
-  };
-
-  const handlePlatformSimulateSuccess = (data: any) => {
-    setTableData(data);
-    setShowTable(true);
   };
 
   const options = {
@@ -213,7 +151,7 @@ const OptionsSelector = () => {
             />
           </div>
           <button
-            onClick={handleTelegramSimulate}
+            onClick={handleSimulate}
             disabled={!telegramMessage}
             className={`flex items-center justify-center space-x-2 w-full py-2.5 px-4 rounded-lg transition-colors ${
               telegramMessage
@@ -228,19 +166,80 @@ const OptionsSelector = () => {
       ),
     },
     option2: {
-      title: "Connect to platform API",
+      title: "Copy from Platforms",
       description:
         "Connect to Web3 platforms using an API key to fetch real-time blockchain data. Select a platform (e.g., CTxbt) to retrieve crypto signals, token prices, and market insights for simulation.",
       icon: <Globe className="w-5 h-5" />,
       content: (
-        <PlatformSelector onSimulateSuccess={handlePlatformSimulateSuccess} />
+        <div className="space-y-6">
+          <div className="relative">
+            <input
+              type={showApiKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter API Key"
+              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              onClick={() => setShowApiKey(!showApiKey)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+            >
+              {showApiKey ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+          <div className="relative">
+            <select
+              value={selectedPlatform}
+              onChange={(e) => handlePlatformChange(e.target.value)}
+              className="w-full p-3 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+            >
+              <option value="">Select Platform</option>
+              {platforms.map((platform) => (
+                <option key={platform.name} value={platform.name}>
+                  {platform.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg
+                className="w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+          <button
+            onClick={handleApiSimulate}
+            disabled={!apiKey || !selectedPlatform}
+            className={`flex items-center justify-center space-x-2 w-full py-2.5 px-4 rounded-lg transition-colors ${
+              apiKey && selectedPlatform
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-gray-800 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <Play className="w-4 h-4" />
+            <span>Simulate</span>
+          </button>
+        </div>
       ),
     },
   };
 
   return (
     <div className="w-[70vw] mx-auto p-6 hidden lg:block">
-      <div className="bg-gray-900 rounded-2xl shadow-xl overflow-visible">
+      <div className="bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
         {/* Options Header */}
         <div className="flex border-b border-gray-800">
           {(["option1", "option2"] as const).map((option) => (
@@ -286,7 +285,7 @@ const OptionsSelector = () => {
           </motion.div>
 
           {/* Table Section */}
-          {showTable && activeOption === "option1" && (
+          {showTable && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -297,6 +296,18 @@ const OptionsSelector = () => {
                 <thead>
                   <tr className="border-b border-gray-800">
                     <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
+                      Twitter Account
+                    </th>
+                    <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
+                      Tweet
+                    </th>
+                    <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
+                      Tweet Date
+                    </th>
+                    <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
+                      Signal Generation Date
+                    </th>
+                    <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
                       Signal Message
                     </th>
                     <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
@@ -304,6 +315,9 @@ const OptionsSelector = () => {
                     </th>
                     <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
                       Token ID
+                    </th>
+                    <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
+                      Price at Tweet
                     </th>
                     <th className="py-3 px-4 text-gray-400 font-medium whitespace-nowrap">
                       Current Price
@@ -326,35 +340,57 @@ const OptionsSelector = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tableData.map((row, index) => (
-                    <tr key={index} className="border-b border-gray-800">
+                  {tableData.map((row) => (
+                    <tr key={row.id} className="border-b border-gray-800">
                       <td className="py-3 px-4 text-gray-300">
-                        {row.signal}
+                        {row.signal_data.twitterHandle}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.tokenSymbol}
+                        <a
+                          href={row.signal_data.tweet_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:underline"
+                        >
+                          Link
+                        </a>
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.tokenId}
+                        {new Date(
+                          row.signal_data.tweet_timestamp
+                        ).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.currentPrice}
+                        {new Date(
+                          row.signal_data.tweet_timestamp
+                        ).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.tp1}
+                        {row.signal_data.signal}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.tp2}
+                        {row.signal_data.tokenMentioned}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.sl}
+                        {row.signal_data.tokenId}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.exit_price}
+                        {row.signal_data.priceAtTweet}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        {row.p_and_l}
+                        {row.signal_data.currentPrice}
                       </td>
+                      <td className="py-3 px-4 text-gray-300">
+                        {row.signal_data.targets[0]}
+                      </td>
+                      <td className="py-3 px-4 text-gray-300">
+                        {row.signal_data.targets[1]}
+                      </td>
+                      <td className="py-3 px-4 text-gray-300">
+                        {row.signal_data.stopLoss}
+                      </td>
+                      <td className="py-3 px-4 text-gray-300">N/A</td>
+                      <td className="py-3 px-4 text-gray-300">N/A</td>
                     </tr>
                   ))}
                 </tbody>
@@ -368,6 +404,5 @@ const OptionsSelector = () => {
     </div>
   );
 };
-
 
 export default OptionsSelector;
