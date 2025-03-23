@@ -28,6 +28,91 @@ const OptionsSelector = () => {
     setShowTable(true);
   };
 
+  const handleTelegramSimulate = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/infer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: telegramMessage }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Raw inference response:', responseText);
+
+      let data: { result: string; };
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error('Failed to parse response as JSON');
+      }
+
+      console.log('Inference result:', data.result);
+
+      let parsedResult: { tokenSymbol: any; signal: any; tp1: any; tp2: any; sl: any; };
+      try {
+        parsedResult = JSON.parse(data.result);
+      } catch (parseError) {
+        throw new Error('Failed to parse result as JSON');
+      }
+
+      if (parsedResult && parsedResult.tokenSymbol && parsedResult.signal && parsedResult.tp1 && parsedResult.tp2 && parsedResult.sl) {
+        const csvContent = `Token Mentioned,Signal Message,TP1,TP2,SL\n${parsedResult.tokenSymbol},${parsedResult.signal},${parsedResult.tp1},${parsedResult.tp2},${parsedResult.sl}`;
+
+        // Send the CSV content to the server to store it
+        const storeResponse = await fetch('/api/telegram-csv-generation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ csvContent }),
+        });
+
+        if (!storeResponse.ok) {
+          throw new Error('Failed to store CSV on server');
+        }
+
+        toast.success('CSV stored successfully in the downloads folder.', {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+      } else {
+        toast.error('Invalid response format. Please try again.', {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+      }
+
+      setShowTable(true);
+    } catch (error) {
+      console.error('Error during inference:', error);
+      toast.error('Failed to perform inference. Please try again.', {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    }
+  };
+
   // Handle platform selection with toaster for non-CTxbt platforms
   const handlePlatformChange = (platformName: string) => {
     if (platformName === "CTxbt") {
@@ -118,7 +203,7 @@ const OptionsSelector = () => {
             />
           </div>
           <button
-            onClick={handleSimulate}
+            onClick={handleTelegramSimulate}
             disabled={!telegramMessage}
             className={`flex items-center justify-center space-x-2 w-full py-2.5 px-4 rounded-lg transition-colors ${
               telegramMessage
