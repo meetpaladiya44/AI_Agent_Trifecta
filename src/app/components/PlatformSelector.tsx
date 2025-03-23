@@ -134,15 +134,17 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
       console.log("Summary result:", result);
 
       const summaryString = result.summary;
+      let parsedJson;
       // Extract the JSON part from the string using a regular expression
       const jsonMatch = summaryString.match(/```json\s*([\s\S]*?)\s*```/);
       console.log("jsonMatch", jsonMatch);
       if (jsonMatch && jsonMatch[1]) {
         const jsonString = jsonMatch[1].trim(); // Extract and clean the JSON string
         try {
-          const parsedJson = JSON.parse(jsonString);
+          parsedJson = JSON.parse(jsonString);
           if (parsedJson.insights) {
             console.log(parsedJson.insights);
+            return parsedJson.insights;
           }
         } catch (parseError) {
           console.error("Failed to parse JSON from summary:", parseError);
@@ -172,7 +174,7 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
     };
     const fetchedSummary = await fetchSummary(dataToSend);
     // const fetchedSummary = " This is a sample summary. lorem ipsum lorem";
-    setSummary(fetchedSummary);
+    setSummary(" " + fetchedSummary);
     setDisplayedSummary(""); // Reset displayed text
     setIsTyping(true); // Start typing effect
     setIsLoadingSummary(false);
@@ -311,22 +313,15 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
         <span>{isSimulating ? "Simulating..." : "Simulate"}</span>
       </button>
 
-      {/* {showResults && (
-        <div>
-          <PlatformResultsTable data={results} />{" "}
-          <button
-            onClick={() => {
-              const csvContent = generateCSV(results);
-              downloadCSV(csvContent, "backtesting.csv");
-            }}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-          >
-            Download CSV
-          </button>
-        </div>
-      )} */}
       {showResults && (
         <div>
+          <div className="text-gray-400 text-sm mb-4 items-center gap-2">
+            <span>
+              You can download your backtested data in CSV. And Summarize it
+              using 0G Computation as well.
+            </span>
+          </div>
+
           <button
             onClick={handleSummarize}
             disabled={isLoadingSummary}
@@ -336,7 +331,16 @@ const PlatformSelector = ({ onSimulateSuccess }: PlatformSelectorProps) => {
                 : "bg-green-600 hover:bg-green-700 text-white"
             }`}
           >
-            {isLoadingSummary ? "Summarizing..." : "Summarize"}
+            {isLoadingSummary ? "Summarizing..." : "Summarize Result"}
+          </button>
+          <button
+            onClick={() => {
+              const csvContent = generateCSV(results);
+              downloadCSV(csvContent, "backtestingResult.csv");
+            }}
+            className="mt-4 ml-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          >
+            Download CSV
           </button>
           {summary && (
             <div className="mt-4 p-4 bg-gray-800 rounded-lg">
